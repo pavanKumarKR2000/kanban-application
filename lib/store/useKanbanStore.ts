@@ -2,8 +2,9 @@ import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { immer } from "zustand/middleware/immer";
 import { mockCategories, mockTags, mockTasks } from "@/data";
+import { devtools, persist } from "zustand/middleware";
 
-interface Tag {
+export interface Tag {
   id: string;
   label: string;
   color?: string;
@@ -15,146 +16,212 @@ export interface Task {
   description?: string;
   categoryId: string;
   tagIds: string[];
-  date: string; // new
-  order: number; // new
+  date: string;
+  order: number;
 }
 
-interface Category {
+export interface Category {
   id: string;
   title: string;
   taskIds: string[];
+  filteredTaskIds: string[];
 }
 
 interface KanbanState {
-  categories: Record<string, Category>;
-  tasks: Record<string, Task>;
-  tags: Record<string, Tag>;
+  categories: Category[];
+  tasks: Task[];
+  tags: Tag[];
   draggedTask: string | undefined;
-  setDraggedTask: (id: string) => void;
-
+  setDraggedTask: (id: string | undefined) => void;
   addCategory: (title: string) => void;
   deleteCategory: (categoryId: string) => void;
-
-  addTask: (categoryId: string, title: string, description?: string) => void;
-  updateTask: (taskId: string, updates: Partial<Omit<Task, "id">>) => void;
+  updateCategory: (categoryId: string, updates: Partial<Category>) => void;
+  addTask: (
+    categoryId: string,
+    title: string,
+    description?: string,
+    tagIds?: string[]
+  ) => void;
+  updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
-
   moveTask: (taskId: string, toCategoryId: string, position?: number) => void;
-
+  getTaskById: (id: string) => Task | undefined;
+  getTagById: (id: string) => Tag | undefined;
+  getCategoryById: (id: string) => Category | undefined;
   addTag: (label: string, color?: string) => void;
   assignTagToTask: (taskId: string, tagId: string) => void;
   removeTagFromTask: (taskId: string, tagId: string) => void;
+  getTasksBySearch: (query: string) => void;
 }
 
 export const useKanbanStore = create<KanbanState>()(
-  immer((set) => ({
-    categories: mockCategories,
-    tasks: mockTasks,
-    tags: mockTags,
-    draggedTask: undefined,
+  // persist(
+  devtools(
+    immer((set, get) => ({
+      categories: mockCategories.map((c) => ({
+        ...c,
+        filteredTaskIds: c.taskIds,
+      })),
+      tasks: mockTasks,
+      tags: mockTags,
+      draggedTask: undefined,
 
-    setDraggedTask: (id) =>
-      set({
-        draggedTask: id,
-      }),
+      setDraggedTask: (id) => set({ draggedTask: id }),
 
-    addCategory: (title) =>
-      set((state) => {
-        const id = nanoid();
-        state.categories[id] = { id, title, taskIds: [] };
-      }),
-
-    deleteCategory: (categoryId) =>
-      set((state) => {
-        const category = state.categories[categoryId];
-        if (category) {
-          category.taskIds.forEach((taskId) => {
-            delete state.tasks[taskId];
+      addCategory: (title) =>
+        set((state) => {
+          const id = nanoid();
+          state.categories.push({
+            id,
+            title,
+            taskIds: [],
+            filteredTaskIds: [],
           });
-          delete state.categories[categoryId];
-        }
-      }),
+        }),
+      updateCategory: (categoryId: string, updates: Partial<Category>) =>
+        set((state) => {
+          const index = state.categories.findIndex((c) => c.id === categoryId);
+          if (index !== -1) {
+            state.categories[index] = {
+              ...state.categories[index],
+              ...updates,
+            };
+          }
+        }),
 
-    addTask: (categoryId, title, description) =>
-      set((state) => {
-        const id = nanoid();
-        const order = state.categories[categoryId]?.taskIds.length || 0;
-        state.tasks[id] = {
-          id,
-          title,
-          description,
-          categoryId,
-          tagIds: [],
-          date: new Date().toISOString(), // store date as ISO string
-          order, // set order based on current index
-        };
-        state.categories[categoryId]?.taskIds.push(id);
-      }),
+      deleteCategory: (categoryId) =>
+        set((state) => {
+          state.categories = state.categories.filter(
+            (c) => c.id !== categoryId
+          );
+          state.tasks = state.tasks.filter((t) => t.categoryId !== categoryId);
+        }),
 
-    updateTask: (taskId, updates) =>
-      set((state) => {
-        const task = state.tasks[taskId];
-        if (task) {
-          Object.assign(task, updates);
-        }
-      }),
+      addTask: (categoryId, title, description, tagIds = []) =>
+        set((state) => {
+          const category = state.categories.find((c) => c.id === categoryId);
+          if (!category) return;
 
-    deleteTask: (taskId) =>
-      set((state) => {
-        const task = state.tasks[taskId];
-        if (task) {
-          const category = state.categories[task.categoryId];
+          const id = nanoid();
+          const order = category.taskIds.length;
+
+          state.tasks.push({
+            id,
+            title,
+            description,
+            categoryId,
+            tagIds,
+            date: new Date().toISOString(),
+            order,
+          });
+
+          category.taskIds.push(id);
+        }),
+
+      updateTask: (taskId: string, updates: Partial<Task>) =>
+        set((state) => {
+          const index = state.tasks.findIndex((t) => t.id === taskId);
+          if (index !== -1) {
+            state.tasks[index] = {
+              ...state.tasks[index],
+              ...updates,
+            };
+          }
+        }),
+      deleteTask: (taskId) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (!task) return;
+          const category = state.categories.find(
+            (c) => c.id === task.categoryId
+          );
           if (category) {
             category.taskIds = category.taskIds.filter((id) => id !== taskId);
+            category.filteredTaskIds = category.filteredTaskIds.filter(
+              (id) => id !== taskId
+            );
           }
-          delete state.tasks[taskId];
-        }
-      }),
+          state.tasks = state.tasks.filter((t) => t.id !== taskId);
+        }),
 
-    moveTask: (taskId, toCategoryId, position) =>
-      set((state) => {
-        const task = state.tasks[taskId];
-        if (!task) return;
+      moveTask: (taskId, toCategoryId, position) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (!task) return;
 
-        const oldCat = state.categories[task.categoryId];
-        if (oldCat) {
-          oldCat.taskIds = oldCat.taskIds.filter((id) => id !== taskId);
-        }
-
-        const newCat = state.categories[toCategoryId];
-        if (newCat) {
-          if (position != null) {
-            newCat.taskIds.splice(position, 0, taskId);
-          } else {
-            newCat.taskIds.push(taskId);
+          const oldCat = state.categories.find((c) => c.id === task.categoryId);
+          if (oldCat) {
+            oldCat.taskIds = oldCat.taskIds.filter((id) => id !== taskId);
+            oldCat.filteredTaskIds = oldCat.filteredTaskIds.filter(
+              (id) => id !== taskId
+            );
           }
 
-          // update task
-          task.categoryId = toCategoryId;
-          task.order = position ?? newCat.taskIds.length - 1;
-        }
-      }),
+          const newCat = state.categories.find((c) => c.id === toCategoryId);
+          if (newCat) {
+            if (position != null) {
+              newCat.taskIds.splice(position, 0, taskId);
+            } else {
+              newCat.taskIds.push(taskId);
+            }
 
-    addTag: (label, color) =>
-      set((state) => {
-        const id = nanoid();
-        state.tags[id] = { id, label, color };
-      }),
+            task.categoryId = toCategoryId;
+            task.order = position ?? newCat.taskIds.length - 1;
+          }
+        }),
 
-    assignTagToTask: (taskId, tagId) =>
-      set((state) => {
-        const task = state.tasks[taskId];
-        if (task && !task.tagIds.includes(tagId)) {
-          task.tagIds.push(tagId);
-        }
-      }),
+      getTaskById: (id: string) => get().tasks.find((task) => task.id === id),
+      getCategoryById: (id: string) =>
+        get().categories.find((task) => task.id === id),
 
-    removeTagFromTask: (taskId, tagId) =>
-      set((state) => {
-        const task = state.tasks[taskId];
-        if (task) {
-          task.tagIds = task.tagIds.filter((id) => id !== tagId);
-        }
-      }),
-  }))
+      getTagById: (id: string) => get().tags.find((tag) => tag.id === id),
+
+      addTag: (label, color) =>
+        set((state) => {
+          const id = nanoid();
+          state.tags.push({ id, label, color });
+        }),
+
+      assignTagToTask: (taskId, tagId) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (task && !task.tagIds.includes(tagId)) {
+            task.tagIds.push(tagId);
+          }
+        }),
+
+      removeTagFromTask: (taskId, tagId) =>
+        set((state) => {
+          const task = state.tasks.find((t) => t.id === taskId);
+          if (task) {
+            task.tagIds = task.tagIds.filter((id) => id !== tagId);
+          }
+        }),
+      getTasksBySearch: (query: string) =>
+        set((state) => {
+          const lowerQuery = query.toLowerCase();
+          state.categories.forEach((cat) => {
+            const filtered = cat.taskIds.filter((taskId) => {
+              const task = state.tasks.find((t) => t.id === taskId);
+              if (!task) return false;
+
+              const matchesTitle = task.title
+                .toLowerCase()
+                .includes(lowerQuery);
+
+              const matchesTag = task.tagIds.some((tid) => {
+                const tag = state.tags.find((tg) => tg.id === tid);
+                return tag?.label.toLowerCase().includes(lowerQuery);
+              });
+
+              return matchesTitle || matchesTag;
+            });
+            cat.filteredTaskIds = filtered;
+          });
+        }),
+    })),
+    { name: "KanbanStore" }
+  )
+  //   { name: "kanban-state" }
+  // )
 );
