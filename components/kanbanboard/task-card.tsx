@@ -1,34 +1,20 @@
 "use client";
-import React, { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardAction,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Task, useKanbanStore } from "@/lib/store/useKanbanStore";
 import { cn, formatDate } from "@/lib/utils";
+import { useState } from "react";
 import TaskActionDropdown from "./task-action-dropdown";
-import DeleteDialog from "./delete-dialog";
-import { toast } from "sonner";
-import TaskDialog from "./task-dialog";
 
 interface TaskCardProps extends Task {}
 
-function TaskCard({
-  id,
-  title,
-  description,
-  categoryId,
-  tagIds,
-  order,
-  date,
-}: TaskCardProps) {
-  const { deleteTask, setDraggedTask, tags, getTagById } = useKanbanStore();
+function TaskCard({ id, title, categoryId, tagIds, date }: TaskCardProps) {
+  const { setDraggedTask, getTagById } = useKanbanStore();
   const [dragging, setDragging] = useState(false);
 
   return (

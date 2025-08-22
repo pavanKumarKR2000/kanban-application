@@ -1,17 +1,13 @@
-import { Search, X } from "lucide-react";
-import React, { useState } from "react";
 import {
   Card,
-  CardAction,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
 import { useKanbanStore } from "@/lib/store/useKanbanStore";
+import { Search } from "lucide-react";
+import React, { useState } from "react";
+import { Input } from "../ui/input";
 function SearchFilter() {
   const [query, setQuery] = useState("");
   const { getTasksBySearch, setSearchQuery } = useKanbanStore();
@@ -35,9 +31,6 @@ function SearchFilter() {
           value={query}
           onChange={onQueryChange}
         />
-        {/* <Button variant="ghost" onClick={() => setQuery("")}>
-          <X className="size-5 text-gray-500" />
-        </Button> */}
       </CardContent>
       <CardFooter hidden></CardFooter>
     </Card>

@@ -20,7 +20,6 @@ export default function CategoryDialog() {
     getCategoryById,
     updateCategory,
     currentSelectedCategoryId,
-    setCurrentSelectedCategoryId,
   } = useKanbanStore();
   const { categoryDialogOpen, setCategoryDialogOpen } = useDialogStore();
 
@@ -46,7 +45,7 @@ export default function CategoryDialog() {
     if (currentSelectedCategoryId) {
       setCategory(getCategoryById(currentSelectedCategoryId)?.title as string);
     }
-  }, [currentSelectedCategoryId]);
+  }, [currentSelectedCategoryId, getCategoryById]);
 
   return (
     <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>

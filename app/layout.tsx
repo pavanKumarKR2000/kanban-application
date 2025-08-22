@@ -1,8 +1,7 @@
+import DialogContainer from "@/components/dialog-container";
+import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/theme-provider";
-import DialogContainer from "@/components/dialog-container";
 
 export const metadata: Metadata = {
   title: {
@@ -19,16 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster position="top-right" />
-          <DialogContainer />
-        </ThemeProvider>
+        {children}
+        <Toaster position="top-right" />
+        <DialogContainer />
       </body>
     </html>
   );

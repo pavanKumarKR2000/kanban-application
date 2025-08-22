@@ -29,7 +29,6 @@ function CategoryColumn({
     setDraggedTask,
     moveTask,
     getTaskById,
-    deleteCategory,
     setCurrentSelectedCategoryId,
   } = useKanbanStore();
 

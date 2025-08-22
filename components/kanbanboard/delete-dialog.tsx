@@ -3,11 +3,9 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useDialogStore } from "@/lib/store/useDialogStore";
 import { useKanbanStore } from "@/lib/store/useKanbanStore";

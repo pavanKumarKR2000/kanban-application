@@ -17,20 +17,24 @@ function Header() {
       setCurrentSelectedTaskId(undefined);
       setCurrentSelectedCategoryId(undefined);
     }
-  }, [taskDialogOpen]);
+  }, [taskDialogOpen, setCurrentSelectedTaskId, setCurrentSelectedCategoryId]);
 
   useEffect(() => {
     if (!deleteDialogOpen) {
       setCurrentSelectedTaskId(undefined);
       setCurrentSelectedCategoryId(undefined);
     }
-  }, [deleteDialogOpen]);
+  }, [
+    deleteDialogOpen,
+    setCurrentSelectedTaskId,
+    setCurrentSelectedCategoryId,
+  ]);
 
   useEffect(() => {
     if (!categoryDialogOpen) {
       setCurrentSelectedCategoryId(undefined);
     }
-  }, [categoryDialogOpen]);
+  }, [categoryDialogOpen, setCurrentSelectedCategoryId]);
 
   return (
     <div className="p-4 space-y-6">

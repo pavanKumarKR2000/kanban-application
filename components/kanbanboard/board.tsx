@@ -1,13 +1,11 @@
 "use client";
+import { useDialogStore } from "@/lib/store/useDialogStore";
 import { useKanbanStore } from "@/lib/store/useKanbanStore";
+import { Plus } from "lucide-react";
+import { Button } from "../ui/button";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import CategoryColumn from "./category-column";
 import Header from "./header";
-import CategoryDialog from "./category-dialog";
-import { useEffect, useState } from "react";
-import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { useDialogStore } from "@/lib/store/useDialogStore";
-import { Button } from "../ui/button";
-import { Plus } from "lucide-react";
 
 function Board() {
   const { categories } = useKanbanStore();
