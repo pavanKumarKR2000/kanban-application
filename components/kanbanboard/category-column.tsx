@@ -51,11 +51,11 @@ function CategoryColumn({
   return (
     <div
       className={cn(
-        "p-4 flex flex-col gap-6 border-2 border-dashed border-transparent w-[400px]",
+        "p-4 flex flex-col gap-6 border-2 border-dashed border-transparent w-[400px]!",
         drop && "border-gray-400"
       )}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-[400px]!">
         <div className="flex items-center gap-1 text-lg">
           <h3>{title}</h3>
           <p className="text-gray-400">{taskIds.length}</p>

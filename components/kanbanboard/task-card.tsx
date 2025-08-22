@@ -20,7 +20,7 @@ function TaskCard({ id, title, categoryId, tagIds, date }: TaskCardProps) {
   return (
     <Card
       className={cn(
-        "w-full gap-2 select-none",
+        "w-[400px]! gap-2 select-none",
         dragging ? "cursor-grabbing" : "cursor-grab"
       )}
       draggable

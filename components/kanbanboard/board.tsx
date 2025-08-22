@@ -14,8 +14,8 @@ function Board() {
   return (
     <div className="flex flex-1 flex-col mx-auto! container">
       <Header />
-      <ScrollArea className="w-full flex-1 rounded-md flex mb-2">
-        <div className="flex flex-1! max-w-screen  overflow-x-auto items-stretch min-h-[70vh]!">
+      <ScrollArea className="flex-1 rounded-md flex mb-2 whitespace-nowrap w-full ">
+        <div className="flex flex-1!  items-stretch min-h-[70vh]!  overflow-hidden! gap-6">
           {categories.map((category) => (
             <CategoryColumn
               key={category.id}
