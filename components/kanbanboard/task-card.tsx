@@ -30,26 +30,11 @@ function TaskCard({
 }: TaskCardProps) {
   const { deleteTask, setDraggedTask, tags, getTagById } = useKanbanStore();
   const [dragging, setDragging] = useState(false);
-  const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
-  const [EditTaskDialogOpen, setEditTaskDialogOpen] = useState(false);
-
-  function onDeleteTaskDialogOpen(open: boolean) {
-    setDeleteTaskDialogOpen(open);
-  }
-
-  function onEditTaskDialogOpen(open: boolean) {
-    setEditTaskDialogOpen(open);
-  }
-
-  function onDeleteTask() {
-    deleteTask(id);
-    toast.success("Task deleted successfully!");
-  }
 
   return (
     <Card
       className={cn(
-        "w-96 gap-2 select-none",
+        "w-full gap-2 select-none",
         dragging ? "cursor-grabbing" : "cursor-grab"
       )}
       draggable
@@ -68,14 +53,11 @@ function TaskCard({
           <span className="text-xl">&#183;</span>
           <p>{formatDate(date)}</p>
         </div>
-        <TaskActionDropdown
-          onDeleteTaskDialogOpen={onDeleteTaskDialogOpen}
-          onEditTaskDialogOpen={onEditTaskDialogOpen}
-        />
+        <TaskActionDropdown taskId={id} categoryId={categoryId} />
       </CardHeader>
       <CardContent>{title}</CardContent>
       <CardFooter>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-h-7">
           {tagIds.map((tagId) => {
             const tag = getTagById(tagId);
             if (!tag) return null;
@@ -92,23 +74,6 @@ function TaskCard({
             );
           })}
         </div>
-        {
-          <DeleteDialog
-            onOpenChange={onDeleteTaskDialogOpen}
-            open={deleteTaskDialogOpen}
-            title="Are you sure you want to delete this task?"
-            action={onDeleteTask}
-          />
-        }
-        {EditTaskDialogOpen && (
-          <TaskDialog
-            id={id}
-            dialogTitle="Edit task"
-            categoryId={categoryId}
-            open={EditTaskDialogOpen}
-            onOpenChange={setEditTaskDialogOpen}
-          />
-        )}
       </CardFooter>
     </Card>
   );

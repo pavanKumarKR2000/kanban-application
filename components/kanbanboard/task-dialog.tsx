@@ -1,20 +1,31 @@
-import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useEffect } from "react";
 
 import { Plus } from "lucide-react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { TAG_COLORS } from "@/lib/constants";
+import { useDialogStore } from "@/lib/store/useDialogStore";
+import { useKanbanStore } from "@/lib/store/useKanbanStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+import { Button } from "../ui/button";
 import {
   Form,
   FormControl,
@@ -23,23 +34,8 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { useKanbanStore } from "@/lib/store/useKanbanStore";
-import { Label } from "../ui/label";
-import ColorSelector from "../ui/color-selector";
-import { TAG_COLORS } from "@/lib/constants";
 import { MultiSelect } from "../ui/multi-select";
-import { toast } from "sonner";
 
 const createTaskSchema = z.object({
   title: z.string().min(1, { message: "Task title is required" }),
@@ -50,29 +46,28 @@ const createTaskSchema = z.object({
   tagColor: z.string().optional(),
 });
 
-interface CreateTaskDialogProps {
-  categoryId: string;
-  dialogTitle: string;
-  id?: string;
-  onOpenChange?: (open: boolean) => void;
-  open?: boolean;
-}
+export default function TaskDialog() {
+  const {
+    addTag,
+    tags,
+    addTask,
+    getTaskById,
+    getTagById,
+    updateTask,
+    currentSelectedTaskId,
+    currentSelectedCategoryId,
+    setSearchQuery,
+  } = useKanbanStore();
 
-export default function TaskDialog({
-  categoryId,
-  dialogTitle,
-  id,
-  onOpenChange,
-  open,
-}: CreateTaskDialogProps) {
-  const { addTag, tags, addTask, getTaskById, getTagById, updateTask } =
-    useKanbanStore();
+  console.log(currentSelectedCategoryId);
+
+  const { taskDialogOpen, setTaskDialogOpen } = useDialogStore();
 
   const form = useForm<z.infer<typeof createTaskSchema>>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: (() => {
-      if (id) {
-        const { title, tagIds } = getTaskById(id)!;
+      if (currentSelectedTaskId) {
+        const { title, tagIds } = getTaskById(currentSelectedTaskId as string)!;
         const tags = tagIds.map((tagId) => ({
           value: tagId,
           label: getTagById(tagId)?.label ?? "",
@@ -90,46 +85,48 @@ export default function TaskDialog({
         title: "",
         selectedTags: [],
         tag: "",
-        tagColor: "",
+        tagColor: TAG_COLORS[0],
       };
     })(),
   });
 
+  function onAddTag() {
+    if (form.getValues("tag")) {
+      addTag(form.getValues("tag") as string, form.getValues("tagColor"));
+      toast.success("Tag added successfully!");
+    }
+  }
+
   function onSubmit({ title, selectedTags }: z.infer<typeof createTaskSchema>) {
-    console.log(title);
-    if (!id) {
+    if (!currentSelectedTaskId) {
       addTask(
-        categoryId,
+        currentSelectedCategoryId as string,
         title,
         "",
         selectedTags?.map((selectedTag) => selectedTag.value)
       );
       toast.success("Task added successfully");
     } else {
-      updateTask(id, {
+      updateTask(currentSelectedTaskId, {
         title,
         tagIds: selectedTags?.map((selectedTag) => selectedTag.value),
       });
       toast.success("Task updated successfully");
     }
+    setTaskDialogOpen(false);
   }
 
   useEffect(() => {
-    console.log(form.formState.errors);
-  }, [form]);
+    setSearchQuery("");
+  }, []);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {!id && (
-        <DialogTrigger className="cursor-pointer " asChild>
-          <Button variant="ghost">
-            <Plus className="size-5" />
-          </Button>
-        </DialogTrigger>
-      )}
+    <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center">{dialogTitle}</DialogTitle>
+          <DialogTitle className="text-center">
+            {currentSelectedTaskId ? "Edit task" : "Add Task"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-8">
           <Form {...form}>
@@ -147,60 +144,66 @@ export default function TaskDialog({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="tag"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Create tag <span className="text-xs">(optional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="tag-1"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="tagColor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Select tag color
-                      <span className="text-xs">(optional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select tag color" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TAG_COLORS.map((color) => (
-                            <SelectItem
-                              key={color}
-                              value={color}
-                              style={{ backgroundColor: color }}
-                            >
-                              {color}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-8 border rounded-md p-3">
+                <FormField
+                  control={form.control}
+                  name="tag"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Create new tag
+                        <span className="text-xs">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="tag-1"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tagColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Select tag color
+                        <span className="text-xs">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select tag color" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TAG_COLORS.map((color) => (
+                              <SelectItem
+                                key={color}
+                                value={color}
+                                style={{ backgroundColor: color }}
+                              >
+                                {color}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="button" onClick={onAddTag}>
+                  Add tag
+                </Button>
+              </div>
 
               <FormField
                 control={form.control}
@@ -228,7 +231,9 @@ export default function TaskDialog({
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
-                <Button type="submit">{id ? "Edit Task" : "Add Task"}</Button>
+                <Button type="submit">
+                  {currentSelectedTaskId ? "Edit task" : "Add Task"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

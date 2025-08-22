@@ -9,33 +9,43 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useDialogStore } from "@/lib/store/useDialogStore";
+import { useKanbanStore } from "@/lib/store/useKanbanStore";
+import { toast } from "sonner";
 
-interface DeleteDialogProps {
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-  title: string;
-  action: () => void;
-}
+export default function DeleteDialog() {
+  const { deleteDialogOpen, setDeleteDialogOpen } = useDialogStore();
+  const {
+    currentSelectedCategoryId,
+    currentSelectedTaskId,
+    deleteCategory,
+    deleteTask,
+  } = useKanbanStore();
 
-export default function DeleteDialog({
-  onOpenChange,
-  open,
-  title,
-  action,
-}: DeleteDialogProps) {
+  function onDelete() {
+    if (currentSelectedTaskId) {
+      deleteTask(currentSelectedTaskId);
+      toast.success("Task deleted successfully!");
+    } else if (currentSelectedCategoryId) {
+      deleteCategory(currentSelectedCategoryId);
+      toast.success("Category deleted successfully!");
+    }
+    setDeleteDialogOpen(false);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="mt-6 text-center">{title}</DialogTitle>
+          <DialogTitle className="mt-6 text-center">{`Are you sure you want to delete this ${
+            currentSelectedTaskId ? "task" : "category"
+          }?`}</DialogTitle>
         </DialogHeader>
         <DialogFooter className="flex items-center !justify-center gap-2">
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={action} variant="destructive">
+          <Button onClick={onDelete} variant="destructive">
             Delete
           </Button>
         </DialogFooter>

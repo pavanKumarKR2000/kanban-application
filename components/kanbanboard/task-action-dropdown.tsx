@@ -5,17 +5,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDialogStore } from "@/lib/store/useDialogStore";
+import { useKanbanStore } from "@/lib/store/useKanbanStore";
 import { Ellipsis } from "lucide-react";
 
 interface TaskActionDropdownProps {
-  onDeleteTaskDialogOpen: (open: boolean) => void;
-  onEditTaskDialogOpen: (open: boolean) => void;
+  taskId: string;
+  categoryId: string;
 }
 
 export default function TaskActionDropdown({
-  onDeleteTaskDialogOpen,
-  onEditTaskDialogOpen,
+  taskId,
+  categoryId,
 }: TaskActionDropdownProps) {
+  const { setTaskDialogOpen, setDeleteDialogOpen } = useDialogStore();
+  const { setCurrentSelectedTaskId, setCurrentSelectedCategoryId } =
+    useKanbanStore();
+
+  function onEditClick() {
+    setTaskDialogOpen(true);
+    setCurrentSelectedTaskId(taskId);
+    setCurrentSelectedCategoryId(categoryId);
+  }
+
+  function onDeleteClick() {
+    setDeleteDialogOpen(true);
+    setCurrentSelectedTaskId(taskId);
+    setCurrentSelectedCategoryId(categoryId);
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -24,12 +42,8 @@ export default function TaskActionDropdown({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-fit" align="start">
-        <DropdownMenuItem onClick={() => onEditTaskDialogOpen(true)}>
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDeleteTaskDialogOpen(true)}>
-          Delete
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onEditClick}>Edit</DropdownMenuItem>
+        <DropdownMenuItem onClick={onDeleteClick}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

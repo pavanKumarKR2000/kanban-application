@@ -3,40 +3,26 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useDialogStore } from "@/lib/store/useDialogStore";
 import { useKanbanStore } from "@/lib/store/useKanbanStore";
-import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-interface CategoryDialogProps {
-  dialogTitle: string;
-  id?: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export default function CategoryDialog({
-  dialogTitle,
-  id,
-  onOpenChange,
-  open,
-}: CategoryDialogProps) {
+export default function CategoryDialog() {
   const [category, setCategory] = useState("");
-  const { addCategory, getCategoryById, updateCategory } = useKanbanStore();
-
-  useEffect(() => {
-    if (id) {
-      setCategory(getCategoryById(id)?.title as string);
-    }
-  }, [id]);
+  const {
+    addCategory,
+    getCategoryById,
+    updateCategory,
+    currentSelectedCategoryId,
+    setCurrentSelectedCategoryId,
+  } = useKanbanStore();
+  const { categoryDialogOpen, setCategoryDialogOpen } = useDialogStore();
 
   function onCategoryChange(e: React.ChangeEvent<HTMLInputElement>) {
     setCategory(e.target.value);
@@ -46,32 +32,29 @@ export default function CategoryDialog({
     addCategory(category);
     setCategory("");
     toast.success("Category added successfully!");
-    onOpenChange(false);
+    setCategoryDialogOpen(false);
   }
 
   function onEditCategory() {
-    updateCategory(id as string, { title: category });
+    updateCategory(currentSelectedCategoryId as string, { title: category });
     setCategory("");
     toast.success("Category updated successfully!");
-    onOpenChange(false);
+    setCategoryDialogOpen(false);
   }
 
+  useEffect(() => {
+    if (currentSelectedCategoryId) {
+      setCategory(getCategoryById(currentSelectedCategoryId)?.title as string);
+    }
+  }, [currentSelectedCategoryId]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {!id && (
-        <DialogTrigger className="cursor-pointer mt-4" asChild>
-          <Button
-            variant="secondary"
-            className="flex items-center gap-2 w-96 text-gray-500"
-          >
-            <Plus className="size-5" />
-            <p className="text-lg">{dialogTitle}</p>
-          </Button>
-        </DialogTrigger>
-      )}
+    <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="mt-6 text-center">{dialogTitle}</DialogTitle>
+          <DialogTitle className="mt-6 text-center">
+            {currentSelectedCategoryId ? "Edit category" : "Add category"}
+          </DialogTitle>
         </DialogHeader>
         <div>
           <Input
@@ -85,10 +68,12 @@ export default function CategoryDialog({
             <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button
-            onClick={() => (id ? onEditCategory() : onAddCategory())}
+            onClick={() =>
+              currentSelectedCategoryId ? onEditCategory() : onAddCategory()
+            }
             disabled={!category}
           >
-            {id ? "Edit" : "Add"}
+            {currentSelectedCategoryId ? "Edit" : "Add"}
           </Button>
         </DialogFooter>
       </DialogContent>

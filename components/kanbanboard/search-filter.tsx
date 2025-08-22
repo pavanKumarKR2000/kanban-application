@@ -14,11 +14,12 @@ import { Button } from "../ui/button";
 import { useKanbanStore } from "@/lib/store/useKanbanStore";
 function SearchFilter() {
   const [query, setQuery] = useState("");
-  const getTasksBySearch = useKanbanStore((state) => state.getTasksBySearch);
+  const { getTasksBySearch, setSearchQuery } = useKanbanStore();
 
   function onQueryChange(e: React.ChangeEvent<HTMLInputElement>) {
     const query = e.target.value;
     setQuery(query);
+    setSearchQuery(query);
     getTasksBySearch(query);
   }
 

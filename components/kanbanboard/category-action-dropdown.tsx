@@ -5,17 +5,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDialogStore } from "@/lib/store/useDialogStore";
+import { useKanbanStore } from "@/lib/store/useKanbanStore";
 import { Ellipsis } from "lucide-react";
 
 interface CategoryActionDropdownProps {
-  onDeleteCategoryDialogOpen: (open: boolean) => void;
-  onEditCategoryDialogOpen: (open: boolean) => void;
+  categoryId: string;
 }
 
 export default function CategoryActionDropdown({
-  onDeleteCategoryDialogOpen,
-  onEditCategoryDialogOpen,
+  categoryId,
 }: CategoryActionDropdownProps) {
+  const { setDeleteDialogOpen, setCategoryDialogOpen } = useDialogStore();
+  const { setCurrentSelectedCategoryId } = useKanbanStore();
+
+  function onEditClick() {
+    setCategoryDialogOpen(true);
+    setCurrentSelectedCategoryId(categoryId);
+  }
+
+  function onDeleteClick() {
+    setDeleteDialogOpen(true);
+    setCurrentSelectedCategoryId(categoryId);
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -24,12 +37,8 @@ export default function CategoryActionDropdown({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-fit" align="start">
-        <DropdownMenuItem onClick={() => onEditCategoryDialogOpen(true)}>
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDeleteCategoryDialogOpen(true)}>
-          Delete
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onEditClick}>Edit</DropdownMenuItem>
+        <DropdownMenuItem onClick={onDeleteClick}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
